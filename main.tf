@@ -111,16 +111,23 @@ resource "aws_iam_role_policy" "gha_policy" {
         Action   = ["s3:ListBucket", "s3:CreateBucket"]
         Resource = "arn:aws:s3:::${var.bucket_name}"
       },
-      # S3 object & bucket config actions
+      # S3 object actions (get/put/delete)
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+        Resource = ["arn:aws:s3:::${var.bucket_name}/*"]
+      },
+      # S3 bucket config writes (public access block, encryption, versioning)
       {
         Effect = "Allow"
         Action = [
-          "s3:GetObject", "s3:PutObject", "s3:DeleteObject",
-          "s3:PutBucketPublicAccessBlock", "s3:PutEncryptionConfiguration", "s3:PutBucketVersioning"
+          "s3:PutBucketPublicAccessBlock",
+          "s3:PutEncryptionConfiguration",
+          "s3:PutBucketVersioning"
         ]
-        Resource = ["arn:aws:s3:::${var.bucket_name}/*"]
+        Resource = "arn:aws:s3:::${var.bucket_name}"
       },
-      # Read bucket‐level settings for refresh
+      # S3 bucket-level reads for refresh (policy, versioning, encryption)
       {
         Effect = "Allow"
         Action = [
@@ -130,66 +137,78 @@ resource "aws_iam_role_policy" "gha_policy" {
         ]
         Resource = "arn:aws:s3:::${var.bucket_name}"
       },
-      # allow reading the ACL so Terraform can refresh it
+      # S3 ACL read
       {
         Effect   = "Allow"
         Action   = ["s3:GetBucketAcl"]
         Resource = "arn:aws:s3:::${var.bucket_name}"
       },
+      # S3 CORS read
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetBucketCors"]
+        Resource = "arn:aws:s3:::${var.bucket_name}"
+      },
+      # S3 Website config read
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetBucketWebsite"]
+        Resource = "arn:aws:s3:::${var.bucket_name}"
+      },
 
-      # DynamoDB table creation & describing
+      # DynamoDB table creation & describe
       {
         Effect   = "Allow"
         Action   = ["dynamodb:CreateTable", "dynamodb:DescribeTable"]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
       },
-      # DynamoDB item & query actions (once it exists)
+      # DynamoDB data plane actions
       {
-        Effect   = "Allow"
-        Action   = ["dynamodb:PutItem", "dynamodb:GetItem", "dynamodb:DeleteItem", "dynamodb:Scan", "dynamodb:Query"]
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Scan",
+          "dynamodb:Query"
+        ]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
       },
-      # Read backup & TTL settings
+      # DynamoDB metadata reads (continuous backups, TTL)
       {
-        Effect   = "Allow"
-        Action   = ["dynamodb:DescribeContinuousBackups", "dynamodb:DescribeTimeToLive"]
+        Effect = "Allow"
+        Action = [
+          "dynamodb:DescribeContinuousBackups",
+          "dynamodb:DescribeTimeToLive"
+        ]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
       },
-      # allow listing tags on the table so Terraform can refresh them
+      # DynamoDB tag listing
       {
         Effect   = "Allow"
         Action   = ["dynamodb:ListTagsOfResource"]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
       },
 
-      # OIDC provider creation & listing
+      # OIDC provider management
       {
-        Effect   = "Allow"
-        Action   = ["iam:CreateOpenIDConnectProvider", "iam:GetOpenIDConnectProvider", "iam:ListOpenIDConnectProviders"]
+        Effect = "Allow"
+        Action = [
+          "iam:CreateOpenIDConnectProvider",
+          "iam:GetOpenIDConnectProvider",
+          "iam:ListOpenIDConnectProviders"
+        ]
         Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${var.oidc_provider}"
       },
-      # Read IAM role details
+      # IAM role introspection (role info, inline policies, attached policies)
       {
-        Effect   = "Allow"
-        Action   = ["iam:GetRole"]
-        Resource = aws_iam_role.gha_role.arn
-      },
-      # allow Terraform to list inline policies on the role
-      {
-        Effect   = "Allow"
-        Action   = ["iam:ListRolePolicies"]
-        Resource = aws_iam_role.gha_role.arn
-      },
-      # Allow Terraform to read the bucket’s CORS config
-      {
-        Effect   = "Allow"
-        Action   = ["s3:GetBucketCors"]
-        Resource = "arn:aws:s3:::${var.bucket_name}"
-      },
-      # Allow Terraform to read inline policies on the role
-      {
-        Effect   = "Allow"
-        Action   = ["iam:GetRolePolicy"]
+        Effect = "Allow"
+        Action = [
+          "iam:GetRole",
+          "iam:ListRolePolicies",
+          "iam:GetRolePolicy",
+          "iam:ListAttachedRolePolicies"
+        ]
         Resource = aws_iam_role.gha_role.arn
       }
     ]
