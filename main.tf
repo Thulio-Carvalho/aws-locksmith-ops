@@ -130,6 +130,12 @@ resource "aws_iam_role_policy" "gha_policy" {
         ]
         Resource = "arn:aws:s3:::${var.bucket_name}"
       },
+      # allow reading the ACL so Terraform can refresh it
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetBucketAcl"]
+        Resource = "arn:aws:s3:::${var.bucket_name}"
+      },
 
       # DynamoDB table creation & describing
       {
@@ -149,6 +155,13 @@ resource "aws_iam_role_policy" "gha_policy" {
         Action   = ["dynamodb:DescribeContinuousBackups", "dynamodb:DescribeTimeToLive"]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
       },
+      # allow listing tags on the table so Terraform can refresh them
+      {
+        Effect   = "Allow"
+        Action   = ["dynamodb:ListTagsOfResource"]
+        Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
+      },
+
       # OIDC provider creation & listing
       {
         Effect   = "Allow"
@@ -159,6 +172,12 @@ resource "aws_iam_role_policy" "gha_policy" {
       {
         Effect   = "Allow"
         Action   = ["iam:GetRole"]
+        Resource = aws_iam_role.gha_role.arn
+      },
+      # allow Terraform to list inline policies on the role
+      {
+        Effect   = "Allow"
+        Action   = ["iam:ListRolePolicies"]
         Resource = aws_iam_role.gha_role.arn
       }
     ]
