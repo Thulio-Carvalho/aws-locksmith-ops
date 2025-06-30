@@ -105,78 +105,23 @@ resource "aws_iam_role_policy" "gha_policy" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      # S3 bucket-level actions (list & create)
-      {
-        Effect   = "Allow"
-        Action   = ["s3:ListBucket", "s3:CreateBucket"]
-        Resource = "arn:aws:s3:::${var.bucket_name}"
-      },
-      # S3 object actions (get/put/delete)
-      {
-        Effect   = "Allow"
-        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
-        Resource = "arn:aws:s3:::${var.bucket_name}/*"
-      },
-      # S3 bucket config writes (public access block, encryption, versioning)
+      # Broad perms on S3 bucket for remote state
       {
         Effect = "Allow"
-        Action = [
-          "s3:PutBucketPublicAccessBlock",
-          "s3:PutEncryptionConfiguration",
-          "s3:PutBucketVersioning"
+        Action = "s3:*"
+        Resource = [
+          "arn:aws:s3:::${var.bucket_name}",
+          "arn:aws:s3:::${var.bucket_name}/*"
         ]
-        Resource = "arn:aws:s3:::${var.bucket_name}"
       },
-      # S3 bucket-level reads for refresh
+      # Broad perms on specific dynamodb table  
       {
         Effect = "Allow"
-        Action = [
-          "s3:GetBucketPolicy",
-          "s3:GetBucketVersioning",
-          "s3:GetEncryptionConfiguration",
-          "s3:GetBucketAcl",
-          "s3:GetBucketCors",
-          "s3:GetBucketWebsite",
-          "s3:GetBucketAccelerateConfiguration",
-          "s3:GetAccelerateConfiguration",
-          "s3:GetBucketRequestPayment",
-          "s3:GetBucketLocation",
-          "s3:GetBucketTagging",
-          "s3:GetPublicAccessBlock",
-          "s3:GetBucketEncryption"
+        Action = "dynamodb:*"
+        Resource = [
+          "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
         ]
-        Resource = "arn:aws:s3:::${var.bucket_name}"
       },
-
-      # DynamoDB table creation & describe
-      {
-        Effect   = "Allow"
-        Action   = ["dynamodb:CreateTable", "dynamodb:DescribeTable"]
-        Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
-      },
-      # DynamoDB data plane actions
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:PutItem",
-          "dynamodb:GetItem",
-          "dynamodb:DeleteItem",
-          "dynamodb:Scan",
-          "dynamodb:Query"
-        ]
-        Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
-      },
-      # DynamoDB metadata reads (continuous backups, TTL, tags)
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:DescribeContinuousBackups",
-          "dynamodb:DescribeTimeToLive",
-          "dynamodb:ListTagsOfResource"
-        ]
-        Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
-      },
-
       # OIDC provider management
       {
         Effect = "Allow"
