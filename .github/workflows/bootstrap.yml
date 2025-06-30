@@ -28,7 +28,7 @@ jobs:
         run: |
           echo "TF_VAR_github_owner=${GITHUB_REPOSITORY%%/*}" >> $GITHUB_ENV
           echo "TF_VAR_github_repo=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
-          echo "TF_VAR_github_branch_pattern=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+          echo "TF_VAR_github_branch_pattern=*" >> $GITHUB_ENV
 
           echo "TF_VAR_bucket_name=${{ secrets.STATE_BUCKET_NAME }}" >> $GITHUB_ENV
           echo "TF_VAR_lock_table=${{ secrets.LOCK_TABLE_NAME }}" >> $GITHUB_ENV
