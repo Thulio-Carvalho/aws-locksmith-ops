@@ -81,7 +81,7 @@ resource "aws_iam_role" "gha_role" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect    = "Allow"
+      Effect = "Allow"
       Principal = {
         Federated = aws_iam_openid_connect_provider.github.arn
       }
@@ -112,14 +112,14 @@ resource "aws_iam_role_policy" "gha_policy" {
       },
       {
         Effect   = "Allow"
-        Action   = ["s3:GetObject","s3:PutObject","s3:DeleteObject"]
+        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
         Resource = ["${aws_s3_bucket.state.arn}/*"]
       },
       {
-        Effect   = "Allow"
-        Action   = [
-          "dynamodb:PutItem","dynamodb:GetItem","dynamodb:DeleteItem",
-          "dynamodb:DescribeTable","dynamodb:Query","dynamodb:Scan"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem", "dynamodb:GetItem", "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable", "dynamodb:Query", "dynamodb:Scan"
         ]
         Resource = [aws_dynamodb_table.lock.arn]
       }
