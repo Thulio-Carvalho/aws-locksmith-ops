@@ -107,8 +107,8 @@ resource "aws_iam_role_policy" "gha_policy" {
     Statement = [
       # S3 bucket-level actions (list & create)
       {
-        Effect = "Allow"
-        Action = ["s3:ListBucket", "s3:CreateBucket"]
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket", "s3:CreateBucket"]
         Resource = "arn:aws:s3:::${var.bucket_name}"
       },
       # S3 object & bucket config actions
@@ -133,32 +133,32 @@ resource "aws_iam_role_policy" "gha_policy" {
 
       # DynamoDB table creation & describing
       {
-        Effect = "Allow"
-        Action = ["dynamodb:CreateTable", "dynamodb:DescribeTable"]
+        Effect   = "Allow"
+        Action   = ["dynamodb:CreateTable", "dynamodb:DescribeTable"]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
       },
       # DynamoDB item & query actions (once it exists)
       {
-        Effect = "Allow"
-        Action = ["dynamodb:PutItem", "dynamodb:GetItem", "dynamodb:DeleteItem", "dynamodb:Scan", "dynamodb:Query"]
+        Effect   = "Allow"
+        Action   = ["dynamodb:PutItem", "dynamodb:GetItem", "dynamodb:DeleteItem", "dynamodb:Scan", "dynamodb:Query"]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
       },
       # Read backup & TTL settings
       {
-        Effect = "Allow"
-        Action = ["dynamodb:DescribeContinuousBackups", "dynamodb:DescribeTimeToLive"]
+        Effect   = "Allow"
+        Action   = ["dynamodb:DescribeContinuousBackups", "dynamodb:DescribeTimeToLive"]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
       },
       # OIDC provider creation & listing
       {
-        Effect = "Allow"
-        Action = ["iam:CreateOpenIDConnectProvider", "iam:GetOpenIDConnectProvider", "iam:ListOpenIDConnectProviders"]
+        Effect   = "Allow"
+        Action   = ["iam:CreateOpenIDConnectProvider", "iam:GetOpenIDConnectProvider", "iam:ListOpenIDConnectProviders"]
         Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${var.oidc_provider}"
       },
       # Read IAM role details
       {
-        Effect = "Allow"
-        Action = ["iam:GetRole"]
+        Effect   = "Allow"
+        Action   = ["iam:GetRole"]
         Resource = aws_iam_role.gha_role.arn
       }
     ]
