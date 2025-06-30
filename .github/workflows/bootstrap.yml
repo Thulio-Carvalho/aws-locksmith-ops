@@ -4,25 +4,49 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   bootstrap:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
+
+    env:
+      AWS_DEFAULT_REGION: us-east-1
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configure AWS creds via OIDC
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.5.6"
+
+      - name: Set Terraform variables
+        run: |
+          echo "TF_VAR_github_owner=${GITHUB_REPOSITORY%%/*}" >> $GITHUB_ENV
+          echo "TF_VAR_github_repo=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
+          echo "TF_VAR_github_branch_pattern=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+          echo "TF_VAR_bucket_name=${{ secrets.STATE_BUCKET_NAME }}" >> $GITHUB_ENV
+          echo "TF_VAR_lock_table=${{ secrets.LOCK_TABLE_NAME }}" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.GH_TERRAFORM_ROLE_ARN }}
           aws-region: us-east-1
 
+      - name: Terraform Format Check
+        run: terraform fmt -check
+
       - name: Terraform Init (bootstrap)
         run: terraform init -backend=false
+
+      - name: Terraform Validate
+        run: terraform validate
 
       - name: Terraform Apply (bootstrap)
         run: terraform apply -auto-approve
