@@ -115,7 +115,7 @@ resource "aws_iam_role_policy" "gha_policy" {
       {
         Effect   = "Allow"
         Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
-        Resource = ["arn:aws:s3:::${var.bucket_name}/*"]
+        Resource = "arn:aws:s3:::${var.bucket_name}/*"
       },
       # S3 bucket config writes (public access block, encryption, versioning)
       {
@@ -127,32 +127,19 @@ resource "aws_iam_role_policy" "gha_policy" {
         ]
         Resource = "arn:aws:s3:::${var.bucket_name}"
       },
-      # S3 bucket-level reads for refresh (policy, versioning, encryption)
+      # S3 bucket-level reads for refresh
       {
         Effect = "Allow"
         Action = [
           "s3:GetBucketPolicy",
           "s3:GetBucketVersioning",
-          "s3:GetEncryptionConfiguration"
+          "s3:GetEncryptionConfiguration",
+          "s3:GetBucketAcl",
+          "s3:GetBucketCors",
+          "s3:GetBucketWebsite",
+          "s3:GetBucketAccelerateConfiguration",
+          "s3:GetAccelerateConfiguration"
         ]
-        Resource = "arn:aws:s3:::${var.bucket_name}"
-      },
-      # S3 ACL read
-      {
-        Effect   = "Allow"
-        Action   = ["s3:GetBucketAcl"]
-        Resource = "arn:aws:s3:::${var.bucket_name}"
-      },
-      # S3 CORS read
-      {
-        Effect   = "Allow"
-        Action   = ["s3:GetBucketCors"]
-        Resource = "arn:aws:s3:::${var.bucket_name}"
-      },
-      # S3 Website config read
-      {
-        Effect   = "Allow"
-        Action   = ["s3:GetBucketWebsite"]
         Resource = "arn:aws:s3:::${var.bucket_name}"
       },
 
@@ -174,19 +161,14 @@ resource "aws_iam_role_policy" "gha_policy" {
         ]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
       },
-      # DynamoDB metadata reads (continuous backups, TTL)
+      # DynamoDB metadata reads (continuous backups, TTL, tags)
       {
         Effect = "Allow"
         Action = [
           "dynamodb:DescribeContinuousBackups",
-          "dynamodb:DescribeTimeToLive"
+          "dynamodb:DescribeTimeToLive",
+          "dynamodb:ListTagsOfResource"
         ]
-        Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
-      },
-      # DynamoDB tag listing
-      {
-        Effect   = "Allow"
-        Action   = ["dynamodb:ListTagsOfResource"]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
       },
 
@@ -200,7 +182,7 @@ resource "aws_iam_role_policy" "gha_policy" {
         ]
         Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${var.oidc_provider}"
       },
-      # IAM role introspection (role info, inline policies, attached policies)
+      # IAM role introspection (role info, inline & attached policies)
       {
         Effect = "Allow"
         Action = [
