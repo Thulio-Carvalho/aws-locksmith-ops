@@ -1,0 +1,29 @@
+name: Bootstrap Terraform Backend
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS creds via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.GH_TERRAFORM_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Terraform Init (bootstrap)
+        run: terraform init -backend=false
+
+      - name: Terraform Apply (bootstrap)
+        run: terraform apply -auto-approve
+
