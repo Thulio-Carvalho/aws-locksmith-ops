@@ -179,6 +179,18 @@ resource "aws_iam_role_policy" "gha_policy" {
         Effect   = "Allow"
         Action   = ["iam:ListRolePolicies"]
         Resource = aws_iam_role.gha_role.arn
+      },
+      # Allow Terraform to read the bucket’s CORS config
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetBucketCors"]
+        Resource = "arn:aws:s3:::${var.bucket_name}"
+      },
+      # Allow Terraform to read inline policies on the role
+      {
+        Effect   = "Allow"
+        Action   = ["iam:GetRolePolicy"]
+        Resource = aws_iam_role.gha_role.arn
       }
     ]
   })
