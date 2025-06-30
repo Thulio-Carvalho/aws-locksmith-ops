@@ -138,7 +138,12 @@ resource "aws_iam_role_policy" "gha_policy" {
           "s3:GetBucketCors",
           "s3:GetBucketWebsite",
           "s3:GetBucketAccelerateConfiguration",
-          "s3:GetAccelerateConfiguration"
+          "s3:GetAccelerateConfiguration",
+          "s3:GetBucketRequestPayment",
+          "s3:GetBucketLocation",
+          "s3:GetBucketTagging",
+          "s3:GetPublicAccessBlock",
+          "s3:GetBucketEncryption"
         ]
         Resource = "arn:aws:s3:::${var.bucket_name}"
       },
