@@ -45,6 +45,7 @@ jobs:
       - name: Terraform Init (bootstrap)
         run: |
           terraform init \
+            -reconfigure \
             -backend-config="bucket=${{ secrets.STATE_BUCKET_NAME }}" \
             -backend-config="key=bootstrap/terraform.tfstate" \
             -backend-config="region=us-east-1" \
