@@ -105,23 +105,60 @@ resource "aws_iam_role_policy" "gha_policy" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      {
-        Effect   = "Allow"
-        Action   = ["s3:ListBucket"]
-        Resource = [aws_s3_bucket.state.arn]
-      },
-      {
-        Effect   = "Allow"
-        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
-        Resource = ["${aws_s3_bucket.state.arn}/*"]
-      },
+      # S3 bucket-level actions (list & create)
       {
         Effect = "Allow"
         Action = [
-          "dynamodb:PutItem", "dynamodb:GetItem", "dynamodb:DeleteItem",
-          "dynamodb:DescribeTable", "dynamodb:Query", "dynamodb:Scan"
+          "s3:ListBucket",
+          "s3:CreateBucket"
         ]
-        Resource = [aws_dynamodb_table.lock.arn]
+        Resource = "arn:aws:s3:::${var.bucket_name}"
+      },
+      # S3 object & bucket config actions
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:PutBucketPublicAccessBlock",
+          "s3:PutEncryptionConfiguration",
+          "s3:PutBucketVersioning"
+        ]
+        Resource = [
+          "arn:aws:s3:::${var.bucket_name}/*"
+        ]
+      },
+      # DynamoDB table creation & describing
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:CreateTable",
+          "dynamodb:DescribeTable"
+        ]
+        Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
+      },
+      # DynamoDB item & query actions (once it exists)
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Scan",
+          "dynamodb:Query"
+        ]
+        Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
+      },
+      # OIDC provider creation & listing
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:CreateOpenIDConnectProvider",
+          "iam:GetOpenIDConnectProvider",
+          "iam:ListOpenIDConnectProviders"
+        ]
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${var.oidc_provider}"
       }
     ]
   })

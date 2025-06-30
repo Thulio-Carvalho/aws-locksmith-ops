@@ -7,13 +7,11 @@ variable "aws_region" {
 variable "bucket_name" {
   description = "S3 bucket name for Terraform remote state"
   type        = string
-  default     = "lucy-infra-tf-state"
 }
 
 variable "lock_table" {
   description = "DynamoDB table name for Terraform state locking"
   type        = string
-  default     = "lucy-tf-lock"
 }
 
 variable "oidc_provider" {
