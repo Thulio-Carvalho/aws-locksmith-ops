@@ -108,59 +108,59 @@ resource "aws_iam_role_policy" "gha_policy" {
       # S3 bucket-level actions (list & create)
       {
         Effect = "Allow"
-        Action = [
-          "s3:ListBucket",
-          "s3:CreateBucket"
-        ]
+        Action = ["s3:ListBucket", "s3:CreateBucket"]
         Resource = "arn:aws:s3:::${var.bucket_name}"
       },
       # S3 object & bucket config actions
       {
         Effect = "Allow"
         Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject",
-          "s3:PutBucketPublicAccessBlock",
-          "s3:PutEncryptionConfiguration",
-          "s3:PutBucketVersioning"
+          "s3:GetObject", "s3:PutObject", "s3:DeleteObject",
+          "s3:PutBucketPublicAccessBlock", "s3:PutEncryptionConfiguration", "s3:PutBucketVersioning"
         ]
-        Resource = [
-          "arn:aws:s3:::${var.bucket_name}/*"
-        ]
+        Resource = ["arn:aws:s3:::${var.bucket_name}/*"]
       },
-      # DynamoDB table creation & describing
+      # Read bucket‐level settings for refresh
       {
         Effect = "Allow"
         Action = [
-          "dynamodb:CreateTable",
-          "dynamodb:DescribeTable"
+          "s3:GetBucketPolicy",
+          "s3:GetBucketVersioning",
+          "s3:GetEncryptionConfiguration"
         ]
+        Resource = "arn:aws:s3:::${var.bucket_name}"
+      },
+
+      # DynamoDB table creation & describing
+      {
+        Effect = "Allow"
+        Action = ["dynamodb:CreateTable", "dynamodb:DescribeTable"]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
       },
       # DynamoDB item & query actions (once it exists)
       {
         Effect = "Allow"
-        Action = [
-          "dynamodb:PutItem",
-          "dynamodb:GetItem",
-          "dynamodb:DeleteItem",
-          "dynamodb:Scan",
-          "dynamodb:Query"
-        ]
+        Action = ["dynamodb:PutItem", "dynamodb:GetItem", "dynamodb:DeleteItem", "dynamodb:Scan", "dynamodb:Query"]
+        Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
+      },
+      # Read backup & TTL settings
+      {
+        Effect = "Allow"
+        Action = ["dynamodb:DescribeContinuousBackups", "dynamodb:DescribeTimeToLive"]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.lock_table}"
       },
       # OIDC provider creation & listing
       {
         Effect = "Allow"
-        Action = [
-          "iam:CreateOpenIDConnectProvider",
-          "iam:GetOpenIDConnectProvider",
-          "iam:ListOpenIDConnectProviders"
-        ]
+        Action = ["iam:CreateOpenIDConnectProvider", "iam:GetOpenIDConnectProvider", "iam:ListOpenIDConnectProviders"]
         Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${var.oidc_provider}"
+      },
+      # Read IAM role details
+      {
+        Effect = "Allow"
+        Action = ["iam:GetRole"]
+        Resource = aws_iam_role.gha_role.arn
       }
     ]
   })
 }
-
